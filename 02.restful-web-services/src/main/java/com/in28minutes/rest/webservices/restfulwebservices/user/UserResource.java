@@ -39,7 +39,7 @@ public class UserResource {
 	//WebMvcLinkBuilder
 	
 	@GetMapping("/users/{id}")
-	public EntityModel<User> retrieveUser(@PathVariable int id) {
+	public ResponseEntity<EntityModel<User>> retrieveUser(@PathVariable int id) {
 		User user = service.findOne(id);
 		
 		if(user==null)
@@ -50,7 +50,7 @@ public class UserResource {
 		WebMvcLinkBuilder link =  linkTo(methodOn(this.getClass()).retrieveAllUsers());
 		entityModel.add(link.withRel("all-users"));
 		
-		return entityModel;
+		return ResponseEntity.ok(entityModel);
 	}
 	
 	@DeleteMapping("/users/{id}")
