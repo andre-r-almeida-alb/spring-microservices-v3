@@ -44,3 +44,14 @@ docker push in28min/mmv2-currency-conversion-service:0.0.1-SNAPSHOT
 docker push in28min/mmv2-api-gateway:0.0.1-SNAPSHOT
 watch -n 0.1 curl http://localhost:8000/sample-api
 ```
+
+#### Chapter steps
+```
+# Run zipkin
+docker run -p 9411:9411 openzipkin/zipkin:2.23
+mvn spring-boot:build-image -DskipTests # build springboot docker image 
+# Or alternatively create a Dockerfile and execute:
+docker build -t <image_name> .
+# Create a docker-compose.yml file to run the docker image created
+docker-compose up
+```
