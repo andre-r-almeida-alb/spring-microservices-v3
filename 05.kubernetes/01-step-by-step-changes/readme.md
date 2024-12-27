@@ -13,7 +13,14 @@
 ```
 docker run -p 8080:8080 in28min/hello-world-rest-api:0.0.1.RELEASE
 kubectl create deployment hello-world-rest-api --image=in28min/hello-world-rest-api:0.0.1.RELEASE
+kubectl get deployment
 kubectl expose deployment hello-world-rest-api --type=LoadBalancer --port=8080
+kubectl get services --watch
+kubectl scale deployment hello-world-rest-api --replicas=3
+watch curl http://34.135.110.251:8080/hello-world
+kubectl get pods
+# In cluster manual mode (standard)
+gcloud container clusters resize my-cluster --node-pool <node_pool> --num-nodes=2 
 ```
 
 ## Step 06
@@ -26,8 +33,17 @@ kubectl get replicaset
 kubectl get deployment
 kubectl get service
 
-kubectl scale deployment hello-world-rest-api --replicas=3
-
+kubectl autoscale deployment hello-world-rest-api --max=4 --cpu-percent=70
+# Horizontal pod autoscaling
+kubectl get hpa
+gcloud container clusters update cluster-name --enable-autoscaling --min-nodes=1 --max-nodes=10
+# Config microservices instances with properties (ex: database connect)
+kubectl create configmap hello-world-config --from-literal=RDS_DB_NAME=todos
+kubectl get configmap
+kubectl describe configmap hello-world-config
+kubectl create secret generic hello-world-secrets-1 --from-literal=RDS_PASSWORD=dummytodos
+kubectl get secret
+kubectl describe secret hello-world-secrets-1
 ```
 
 ## Step 07
@@ -59,6 +75,9 @@ kubectl get events
 kubectl get events --sort.by=.metadata.creationTimestamp
 
 kubectl explain replicaset
+
+gcloud container node-pools list --zone=us-central1-c --cluster=my-cluster
+gcloud container node-pools create POOL_NAME --cluster CLUSTER_NAME
 ```
 
 ## Step 09
@@ -114,6 +133,7 @@ gcloud container clusters get-credentials in28minutes-cluster --zone us-central1
 - Step 14 - Setup Currency Exchange & Currency Conversion Microservices - K8S versions
 - Step 15 - Create Container images for Currency Exchange & Currency Conversion Microservices
 ```
+# Create a docker ID in hub.docker.com
 docker login
 docker push in28min/mmv3-currency-exchange-service:0.0.11-SNAPSHOT
 docker push in28min/mmv3-currency-conversion-service:0.0.11-SNAPSHOT
@@ -123,12 +143,12 @@ docker push in28min/mmv3-currency-conversion-service:0.0.11-SNAPSHOT
 - Step 16 - Deploy Microservices to Kubernetes & Understand Service Discovery
 
 URLs
-- Currency Exchange Service - http://IP_ADDRESS:8000/currency-exchange/from/USD/to/INR
-- Currency Conversion Service - http://IP_ADDRESS:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
+- Currency Exchange Service - http://35.239.117.13:8000/currency-exchange/from/USD/to/INR
+- Currency Conversion Service - http://130.211.238.186:8100/currency-conversion-feign/from/USD/to/INR/quantity/10
 
 
 ```
-kubectl create deployment currency-exchange --image=in28min/mmv3-currency-exchange-service:0.0.11-SNAPSHOT
+kubectl create deployment currency-exchange --image=microservudemy/mmv3-api-currency-exchange-service:0.0.12-SNAPSHOT
 kubectl expose deployment currency-exchange --type=LoadBalancer --port=8000
 kubectl get svc
 kubectl get services
@@ -138,7 +158,7 @@ kubectl get replicaset
 kubectl get rs
 kubectl get all
 
-kubectl create deployment currency-conversion --image=in28min/mmv3-currency-conversion-service:0.0.11-SNAPSHOT
+kubectl create deployment currency-conversion --image=microservudemy/mmv3-api-currency-conversion-service:0.0.12-SNAPSHOT
 kubectl expose deployment currency-conversion --type=LoadBalancer --port=8100
 kubectl get svc --watch
 

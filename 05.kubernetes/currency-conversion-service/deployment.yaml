@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    autopilot.gke.io/resource-adjustment: '{"input":{"containers":[{"name":"mmv3-api-currency-conversion-service"}]},"output":{"containers":[{"limits":{"ephemeral-storage":"1Gi"},"requests":{"cpu":"500m","ephemeral-storage":"1Gi","memory":"2Gi"},"name":"mmv3-api-currency-conversion-service"}]},"modified":true}'
+    autopilot.gke.io/warden-version: 3.0.42
+    deployment.kubernetes.io/revision: "1"
+  labels:
+    app: currency-conversion
+  name: currency-conversion
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: currency-conversion
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: currency-conversion
+    spec:
+      containers:
+        - image: microservudemy/mmv3-api-currency-conversion-service:0.0.12-SNAPSHOT
+          imagePullPolicy: IfNotPresent
+          name: mmv3-api-currency-conversion-service
+          envFrom:
+            - configMapRef:
+                name: currency-conversion
+#          env:
+#            - name: CURRENCY_EXCHANGE_URI
+#              value: http://currency-exchange
+          readinessProbe:
+            httpGet:
+              port: 8100
+              path: /actuator/health/readiness
+          livenessProbe:
+            httpGet:
+              port: 8100
+              path: /actuator/health/liveness
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cloud.google.com/neg: '{"ingress":true}'
+  labels:
+    app: currency-conversion
+  name: currency-conversion
+  namespace: default
+spec:
+  allocateLoadBalancerNodePorts: true
+  clusterIP: 34.118.226.125
+  clusterIPs:
+    - 34.118.226.125
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+    - nodePort: 30729
+      port: 8100
+      protocol: TCP
+      targetPort: 8100
+  selector:
+    app: currency-conversion
+  sessionAffinity: None
+  type: LoadBalancer
+---
+apiVersion: v1
+data:
+  CURRENCY_EXCHANGE_URI: http://currency-exchange
+kind: ConfigMap
+metadata:
+  name: currency-conversion-service
+  namespace: default
